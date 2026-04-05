@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>GelScan Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05080d;--s1:#0a0f16;--s2:#111820;--s3:#17202b;
+  --green:#00dc9f;--gdim:rgba(0,220,159,0.12);--gborder:rgba(0,220,159,0.2);
+  --cyan:#00b8e6;--cdim:rgba(0,184,230,0.1);--cborder:rgba(0,184,230,0.22);
+  --orange:#ff7043;--gold:#f5c842;--danger:#ff4455;--purple:#a78bfa;
+  --text:#d8eae4;--muted:#4a6860;--muted2:#1e2e28;
+  --mono:'Space Mono',monospace;--display:'Bebas Neue',sans-serif;--body:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:var(--body);height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+.app{width:100%;max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.screen.active{opacity:1;pointer-events:all}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,20,15,0.03) 3px);pointer-events:none;z-index:9999}
+
+/* LOGIN */
+#screen-login{background:var(--bg);align-items:center;justify-content:center}
+.login-wrap{width:100%;max-width:320px;padding:0 28px;position:relative;z-index:1}
+.login-logo{font-family:var(--display);font-size:54px;letter-spacing:0.06em;color:var(--text);line-height:1;margin-bottom:2px}
+.login-logo em{color:var(--green);font-style:normal}
+.login-sub{font-family:var(--mono);font-size:8px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-bottom:44px}
+.lfield{margin-bottom:14px}
+.llabel{font-family:var(--mono);font-size:9px;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.linput{width:100%;background:var(--s2);border:0.5px solid var(--gborder);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:14px;padding:12px 14px;outline:none;transition:border-color 0.2s}
+.linput:focus{border-color:var(--green)}
+.login-btn{width:100%;padding:15px;background:var(--green);color:var(--bg);font-family:var(--display);font-size:22px;letter-spacing:0.1em;border:none;border-radius:10px;cursor:pointer;margin-top:20px;text-transform:uppercase}
+.login-btn:active{opacity:0.8}
+.lerr{font-family:var(--mono);font-size:11px;color:var(--danger);margin-top:10px;text-align:center;min-height:18px}
+.login-glow{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.login-glow::before{content:'';position:absolute;top:-30%;left:-20%;width:80%;height:80%;border-radius:50%;background:radial-gradient(circle,rgba(0,220,159,0.05) 0%,transparent 70%)}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 10px;border-bottom:0.5px solid rgba(0,220,159,0.1);background:rgba(5,8,13,0.93);backdrop-filter:blur(12px);flex-shrink:0;z-index:10}
+.logo-mark{font-family:var(--display);font-size:21px;letter-spacing:0.06em;color:var(--text);line-height:1}
+.logo-mark em{color:var(--green);font-style:normal}
+.logo-sub{font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-top:1px}
+.badge{display:flex;align-items:center;gap:5px;border:0.5px solid;border-radius:20px;padding:4px 9px;font-family:var(--mono);font-size:9px;letter-spacing:0.1em}
+.badge-green{background:var(--gdim);border-color:var(--gborder);color:var(--green)}
+.badge-cyan{background:var(--cdim);border-color:var(--cborder);color:var(--cyan)}
+.badge-purple{background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);color:var(--purple)}
+.live-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.back-btn{background:none;border:none;color:var(--cyan);font-family:var(--mono);font-size:10px;letter-spacing:0.08em;cursor:pointer}
+
+/* CAMERA */
+#screen-camera{background:#000}
+.cam-wrap{flex:1;position:relative;overflow:hidden;background:#000}
+#videoEl{width:100%;height:100%;object-fit:cover;display:block}
+#overlayCnv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cam-top{position:absolute;top:0;left:0;right:0;padding:12px 16px;display:flex;justify-content:space-between}
+.hud-chip{background:rgba(5,8,13,0.72);backdrop-filter:blur(8px);border:0.5px solid var(--gborder);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:9px;letter-spacing:0.1em;color:var(--green);text-transform:uppercase}
+.import-btn{background:rgba(5,8,13,0.72);backdrop-filter:blur(8px);border:0.5px solid var(--gborder);border-radius:6px;padding:7px 14px;font-family:var(--mono);font-size:10px;letter-spacing:0.06em;color:var(--text);cursor:pointer;text-transform:uppercase}
+.cam-bot{position:absolute;bottom:0;left:0;right:0;padding:16px 20px 28px;display:flex;flex-direction:column;align-items:center;gap:10px;background:linear-gradient(transparent,rgba(5,8,13,0.88) 55%)}
+.lock-txt{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;text-align:center;transition:color 0.3s}
+.lock-txt.on{color:var(--green)}
+.lock-bar-wrap{width:150px;height:2px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+.lock-bar{height:100%;background:var(--green);border-radius:2px;width:0%;transition:width 0.25s;box-shadow:0 0 8px var(--green)}
+.shutter-ring{width:72px;height:72px;border-radius:50%;border:2px solid rgba(0,220,159,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s}
+.shutter-ring.ready{border-color:var(--green);box-shadow:0 0 24px rgba(0,220,159,0.2)}
+.shutter-ring:active{transform:scale(0.91)}
+.shutter-core{width:54px;height:54px;border-radius:50%;background:var(--text);transition:background 0.3s}
+.shutter-ring.ready .shutter-core{background:var(--green)}
+.flash{position:absolute;inset:0;background:white;opacity:0;pointer-events:none;transition:opacity 0.06s}
+.flash.on{opacity:1}
+#fileIn{display:none}
+
+/* SETUP SCREEN — tell app about your gel before AI runs */
+#screen-setup{background:var(--bg)}
+.setup-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 60px}
+.gel-thumb-wrap{position:relative;margin-bottom:10px}
+.gel-thumb{width:100%;border-radius:10px;border:0.5px solid var(--gborder);max-height:200px;object-fit:contain;background:#000;display:block}
+.orient-bar{display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.ob-btn{background:var(--s2);border:0.5px solid var(--gborder);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:background 0.15s}
+.ob-btn:active{background:var(--gdim)}
+.ob-btn.highlight{background:var(--gdim);border-color:var(--gborder);color:var(--green)}
+.ob-ai{background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.3);color:var(--purple)}
+.ob-ai:active{background:rgba(167,139,250,0.2)}
+.orient-status{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;min-height:14px;line-height:1.5}
+.info-card{background:var(--s1);border:0.5px solid var(--gborder);border-radius:10px;padding:14px;margin-bottom:12px}
+.info-card-title{font-family:var(--mono);font-size:9px;letter-spacing:0.15em;color:var(--green);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.info-card-title::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green)}
+.field-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.field-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);width:110px;flex-shrink:0;letter-spacing:0.04em}
+.field-inp{flex:1;background:var(--s2);border:0.5px solid rgba(0,220,159,0.12);border-radius:7px;color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 10px;outline:none;transition:border-color 0.2s}
+.field-inp:focus{border-color:var(--gborder)}
+.field-inp::placeholder{color:var(--muted);font-size:11px}
+.help-txt{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.65;margin-top:-4px;margin-bottom:10px;padding-left:120px}
+
+/* lane table */
+.lane-tbl{width:100%;border-collapse:collapse;margin-bottom:8px}
+.lane-tbl th{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;padding:4px 6px;text-align:left}
+.lane-tbl td{padding:4px 4px}
+.lane-inp{width:100%;background:var(--s2);border:0.5px solid rgba(0,220,159,0.1);border-radius:6px;color:var(--text);font-family:var(--body);font-size:12px;padding:7px 8px;outline:none;transition:border-color 0.2s}
+.lane-inp:focus{border-color:var(--gborder)}
+.lane-inp::placeholder{color:var(--muted);font-size:11px}
+.lane-num-cell{font-family:var(--display);font-size:18px;color:var(--muted);width:26px;text-align:right;padding-right:6px}
+.lane-skip-cell input[type=checkbox]{width:16px;height:16px;accent-color:var(--orange)}
+.primary-btn{width:100%;padding:15px;background:var(--green);color:var(--bg);font-family:var(--display);font-size:21px;letter-spacing:0.1em;border:none;border-radius:10px;cursor:pointer;margin-top:14px;text-transform:uppercase;transition:opacity 0.15s,transform 0.1s}
+.primary-btn:not(:disabled):active{transform:scale(0.97);opacity:0.88}
+.primary-btn:disabled{opacity:0.3;cursor:not-allowed}
+.section-head{display:flex;align-items:center;gap:8px;margin:14px 0 10px}
+.section-line{flex:1;height:0.5px;background:var(--gborder)}
+.section-lbl{font-family:var(--mono);font-size:9px;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+
+/* ANALYZE SCREEN */
+#screen-analyze{background:var(--bg)}
+.analyze-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 60px}
+.gel-viewer{position:relative;width:100%;height:280px;background:#000;border-radius:10px;overflow:hidden;border:0.5px solid var(--gborder);touch-action:none;margin-bottom:8px}
+#gelCnv{position:absolute;top:0;left:0;transform-origin:0 0}
+.zoom-bar{display:flex;align-items:center;gap:6px;margin-bottom:12px}
+.zc-btn{background:var(--s2);border:0.5px solid var(--gborder);border-radius:6px;color:var(--green);font-family:var(--mono);font-size:16px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.zc-btn:active{background:var(--gdim)}
+.zc-label{font-family:var(--mono);font-size:10px;color:var(--muted);min-width:40px;text-align:center}
+.zc-hint{font-family:var(--mono);font-size:9px;color:var(--muted);flex:1;text-align:right}
+
+/* phase card */
+.phase-card{background:var(--s1);border:0.5px solid var(--gborder);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.phase-head{display:flex;align-items:center;gap:10px;padding:11px 14px}
+.phase-num{font-family:var(--display);font-size:20px;color:var(--muted2);width:24px;flex-shrink:0;line-height:1;transition:color 0.3s}
+.phase-card.running .phase-num{color:var(--cyan)}
+.phase-card.done .phase-num{color:var(--green)}
+.phase-info{flex:1}
+.phase-title{font-size:13px;font-weight:500;color:var(--text)}
+.phase-detail{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5;transition:color 0.3s}
+.phase-card.running .phase-detail{color:var(--cyan)}
+.phase-card.done .phase-detail{color:var(--green)}
+.phase-pill{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 7px;border-radius:20px;border:0.5px solid;flex-shrink:0}
+.pill-p{color:var(--muted);border-color:var(--muted2)}
+.pill-r{color:var(--cyan);border-color:rgba(0,184,230,0.4);animation:blink 1s infinite}
+.pill-d{color:var(--green);border-color:rgba(0,220,159,0.35)}
+.pill-w{color:var(--orange);border-color:rgba(255,112,67,0.35)}
+.prog-track{height:2px;background:var(--s2)}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));width:0%;transition:width 0.4s}
+
+/* confirm boxes section */
+.confirm-info{background:var(--s1);border:0.5px solid rgba(0,220,159,0.15);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-family:var(--mono);font-size:11px;color:var(--text);line-height:1.7}
+.confirm-info b{color:var(--green)}
+.confirm-info .warn{color:var(--gold)}
+
+/* RESULTS */
+#screen-results{background:var(--bg)}
+.res-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 60px}
+#annotCnv{width:100%;border-radius:10px;border:0.5px solid var(--gborder);display:block;margin-bottom:14px}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+.stat-card{background:var(--s1);border:0.5px solid rgba(0,220,159,0.1);border-radius:10px;padding:10px 6px;text-align:center}
+.stat-val{font-family:var(--display);font-size:24px;line-height:1;color:var(--green)}
+.stat-val.cyan{color:var(--cyan)}.stat-val.gold{color:var(--gold)}.stat-val.orange{color:var(--orange)}
+.stat-lbl{font-family:var(--mono);font-size:7px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-top:4px}
+.reg-card{background:var(--s1);border:0.5px solid var(--gborder);border-radius:10px;padding:14px;margin-bottom:12px}
+.reg-title{font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--green);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.reg-title::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite}
+.reg-eq{font-family:var(--mono);font-size:13px;color:var(--text);margin-bottom:6px}
+.reg-eq span{color:var(--green)}
+.reg-r2-val{font-family:var(--display);font-size:40px;line-height:1}
+.reg-r2-lbl{font-family:var(--mono);font-size:10px;margin-top:2px}
+#chartCnv{width:100%;display:block;margin-top:12px;border-radius:6px}
+.data-tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;margin-bottom:14px}
+.data-tbl th{font-size:8px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;padding:6px 6px;text-align:left;border-bottom:0.5px solid rgba(0,220,159,0.1)}
+.data-tbl td{padding:6px 6px;border-bottom:0.5px solid rgba(255,255,255,0.04);color:var(--text)}
+.secondary-btn{width:100%;padding:13px;background:transparent;color:var(--cyan);font-family:var(--display);font-size:18px;letter-spacing:0.1em;border:0.5px solid rgba(0,184,230,0.35);border-radius:10px;cursor:pointer;margin-top:8px;text-transform:uppercase}
+.box-list-wrap{background:var(--s1);border:0.5px solid var(--gborder);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.box-list-title{font-family:var(--mono);font-size:9px;letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.box-list-scroll{display:flex;flex-wrap:wrap;gap:6px}
+.box-chip{display:flex;align-items:center;gap:5px;padding:5px 8px 5px 10px;border-radius:20px;border:0.5px solid;font-family:var(--mono);font-size:10px;cursor:pointer;transition:opacity 0.15s}
+.box-chip:hover{opacity:0.7}
+.box-chip .del-x{font-size:13px;line-height:1;opacity:0.7}
+.chip-poi{background:rgba(0,184,230,0.1);border-color:rgba(0,184,230,0.3);color:var(--cyan)}
+.chip-ctrl{background:rgba(0,220,159,0.1);border-color:rgba(0,220,159,0.3);color:var(--green)}
+.chip-bg{background:rgba(245,200,66,0.1);border-color:rgba(245,200,66,0.3);color:var(--gold)}
+.mode-toggle{display:flex;gap:6px;margin-bottom:10px}
+.mtab{flex:1;padding:9px 4px;font-family:var(--mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;background:var(--s2);border:0.5px solid rgba(255,255,255,0.07);border-radius:8px;color:var(--muted);cursor:pointer;transition:all 0.15s;text-align:center}
+.mtab.active-pan{background:var(--cdim);border-color:var(--cborder);color:var(--cyan)}
+.mtab.active-drag{background:rgba(255,112,67,0.12);border-color:rgba(255,112,67,0.3);color:var(--orange)}
+.drag-hint{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;margin-bottom:8px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ LOGIN ══ -->
+<div class="screen active" id="screen-login">
+  <div class="login-glow"></div>
+  <div class="login-wrap">
+    <div class="login-logo">Gel<em>Scan</em></div>
+    <div class="login-sub">Western Blot AI · Pro Edition</div>
+    <div class="lfield"><div class="llabel">Username</div>
+      <input class="linput" id="lu" type="text" autocapitalize="none" placeholder="username"></div>
+    <div class="lfield"><div class="llabel">Password</div>
+      <input class="linput" id="lp" type="password" placeholder="password"></div>
+    <button class="login-btn" onclick="doLogin()">Access Lab</button>
+    <div class="lerr" id="lerr"></div>
+    <div style="margin-top:44px;display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div style="font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase">Created at</div>
+      <img src="data:image/png;base64,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" style="width:48px;height:48px;object-fit:contain;border-radius:4px;opacity:0.85">
+      <div style="font-family:var(--mono);font-size:8px;letter-spacing:0.05em;color:var(--muted2);text-align:center;line-height:1.65;max-width:260px;margin-top:12px;padding:0 8px">
+        Results are estimates for preliminary screening only. Always validate before drawing conclusions.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CAMERA ══ -->
+<div class="screen" id="screen-camera">
+  <div class="topbar">
+    <div><div class="logo-mark">Gel<em>Scan</em></div><div class="logo-sub">Scan gel</div></div>
+    <div class="badge badge-green"><div class="live-dot"></div>LIVE</div>
+  </div>
+  <div class="cam-wrap">
+    <video id="videoEl" autoplay playsinline muted></video>
+    <canvas id="overlayCnv"></canvas>
+    <div class="flash" id="flashEl"></div>
+    <div class="cam-top">
+      <div class="hud-chip" id="lockChip">SCANNING</div>
+      <button class="import-btn" onclick="document.getElementById('fileIn').click()">↑ Import Image</button>
+    </div>
+    <div class="cam-bot">
+      <div class="lock-txt" id="lockTxt">Point camera at your gel</div>
+      <div class="lock-bar-wrap"><div class="lock-bar" id="lockBar"></div></div>
+      <div class="shutter-ring" id="shutterRing" onclick="captureGel()"><div class="shutter-core"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SETUP: tell us about your gel ══ -->
+<div class="screen" id="screen-setup">
+  <div class="topbar">
+    <button class="back-btn" onclick="goCamera()">← Retake</button>
+    <div><div class="logo-mark">Gel<em>Scan</em></div><div class="logo-sub">Gel setup</div></div>
+    <div class="badge badge-cyan">SETUP</div>
+  </div>
+  <div class="setup-scroll">
+    <div class="gel-thumb-wrap">
+      <canvas id="setupThumb" class="gel-thumb"></canvas>
+    </div>
+    <div class="orient-bar">
+      <button class="ob-btn ob-ai" onclick="autoOrient()">⬡ Auto-detect orientation</button>
+      <button class="ob-btn" onclick="rotate(-90)" title="Rotate left">↺ 90°</button>
+      <button class="ob-btn" onclick="rotate(90)" title="Rotate right">↻ 90°</button>
+      <button class="ob-btn" onclick="flip('h')" title="Flip horizontal">⇔ Flip H</button>
+      <button class="ob-btn" onclick="flip('v')" title="Flip vertical">⇕ Flip V</button>
+    </div>
+    <div class="orient-status" id="orientStatus">Upload a gel image, then tap Auto-detect or manually adjust orientation.</div>
+
+    <div class="info-card">
+      <div class="info-card-title">Gel layout</div>
+      <div class="field-row">
+        <div class="field-lbl">Total lanes</div>
+        <input class="field-inp" id="totalLanes" type="number" min="1" max="30" value="12" style="width:70px;flex:none">
+      </div>
+      <div class="field-row">
+        <div class="field-lbl">Signal band at</div>
+        <select class="field-inp" id="bandPosition" style="width:130px;flex:none">
+          <option value="auto">Auto-detect</option>
+          <option value="top">Top of gel</option>
+          <option value="middle">Middle of gel</option>
+          <option value="bottom">Bottom of gel</option>
+        </select>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:8px;line-height:1.6">
+        One signal row detected per lane (the lysosome protein band). One background box placed per lane in nearest empty gel region.
+      </div>
+    </div>
+
+    <div class="section-head"><div class="section-line"></div><div class="section-lbl">Lane details — name each lane & mark skips</div><div class="section-line"></div></div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+      Enter known concentration (mg/mL) for standard curve lanes. Check ✕ to skip (ladder, gaps, or lanes you are not quantifying).
+    </div>
+    <table class="lane-tbl">
+      <tr><th>#</th><th>Name</th><th>mg/mL</th><th style="text-align:center">Skip</th></tr>
+    </table>
+    <div id="laneRowsWrap"></div>
+    <button class="primary-btn" onclick="goAnalyze()">Detect bands →</button>
+  </div>
+</div>
+
+<!-- ══ ANALYZE ══ -->
+<div class="screen" id="screen-analyze">
+  <div class="topbar">
+    <button class="back-btn" onclick="showScreen('setup')">← Setup</button>
+    <div><div class="logo-mark">Gel<em>Scan</em></div><div class="logo-sub">Band detection</div></div>
+    <div class="badge badge-purple"><div class="live-dot"></div>AI+CV</div>
+  </div>
+  <div class="analyze-scroll">
+    <div class="mode-toggle" id="modeToggle" style="display:none">
+      <div class="mtab active-pan" id="mtab-pan" onclick="setInteractMode('pan')">☞ Pan / Zoom</div>
+      <div class="mtab" id="mtab-drag" onclick="setInteractMode('drag')">⊹ Move boxes</div>
+    </div>
+    <div class="drag-hint" id="dragHint" style="display:none"></div>
+    <div class="zoom-bar">
+      <button class="zc-btn" onclick="zoomBy(0.3)">+</button>
+      <button class="zc-btn" onclick="zoomBy(-0.3)">−</button>
+      <button class="zc-btn" onclick="resetZoom()" style="font-size:11px">⊡</button>
+      <div class="zc-label" id="zoomLbl">100%</div>
+      <div class="zc-hint">Pinch/scroll · drag to pan or move box</div>
+    </div>
+    <div class="gel-viewer" id="gelViewer"><canvas id="gelCnv"></canvas></div>
+
+    <div id="phaseContainer"></div>
+
+    <div id="confirmSection" style="display:none">
+      <div class="confirm-info" id="confirmInfo"></div>
+      <div class="box-list-wrap">
+        <div class="box-list-title">Detected boxes — tap × to delete any you don't need</div>
+        <div class="box-list-scroll" id="boxChipList"></div>
+      </div>
+      <button class="primary-btn" onclick="runCalc()">Looks good — calculate →</button>
+      <button class="secondary-btn" style="margin-top:8px" onclick="showScreen('setup')">← Adjust setup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULTS ══ -->
+<div class="screen" id="screen-results">
+  <div class="topbar">
+    <button class="back-btn" onclick="showScreen('analyze')">← Detect</button>
+    <div><div class="logo-mark">Gel<em>Scan</em></div><div class="logo-sub">Results</div></div>
+  </div>
+  <div class="res-scroll">
+    <canvas id="annotCnv"></canvas>
+    <div class="stat-row" id="statRow"></div>
+    <div class="reg-card" id="regCard"></div>
+    <div class="section-head"><div class="section-line"></div><div class="section-lbl">Per-lane data</div><div class="section-line"></div></div>
+    <table class="data-tbl">
+      <thead><tr><th>#</th><th>Lane</th><th>Signal mean</th><th>BG mean</th><th>255−signal</th><th>255−BG</th><th>Net (band−BG)</th><th>mg/mL</th></tr></thead>
+      <tbody id="dataTbody"></tbody>
+    </table>
+    <button class="secondary-btn" onclick="newScan()">Scan new gel</button>
+  </div>
+</div>
+
+</div>
+<input type="file" id="fileIn" accept="image/*">
+
+<script>
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const API='https://api.anthropic.com/v1/messages';
+const COLORS=['#00dc9f','#00b8e6','#ff7043','#f5c842','#c084fc','#fb7185','#34d399','#60a5fa','#e879f9','#facc15','#38bdf8','#f87171'];
+
+let gelImg=null,gelDataURL=null,gelB64=null;
+let detectedBoxes=[];   // [{laneIdx, type:'poi'|'ctrl'|'bg', x,y,w,h}] — image px
+let roiW=0,roiH=0;     // fixed ROI size
+let laneConfig=[];      // [{name,conc,skip}] per lane
+let results=[];
+let aiInterpretation='';
+
+// zoom/pan
+let zoom=1,panX=0,panY=0,baseScale=1;
+let isPanning=false,panSX=0,panSY=0,panOX=0,panOY=0;
+let pinchDist0=0,pinchZoom0=1,touchMode='idle';
+// interact mode and drag-box state
+let interactMode='pan';  // 'pan' | 'drag'
+let dragBoxIdx=-1, dragOffX=0, dragOffY=0, isDraggingBox=false;
+let videoStream=null,lockAF=null,lockLevel=0,frameCount=0;
+
+// ═══════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════
+function doLogin(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lp').value;
+  if(u==='secure'&&p==='secure'){document.getElementById('lerr').textContent='';showScreen('camera');startCamera();}
+  else{document.getElementById('lerr').textContent='Invalid credentials.';document.getElementById('lp').value='';}
+}
+document.getElementById('lp').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('lu').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('lp').focus();});
+
+// ═══════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+id).classList.add('active');}
+function goCamera(){if(lockAF)cancelAnimationFrame(lockAF);lockAF=null;showScreen('camera');startCamera();}
+function newScan(){gelImg=null;gelDataURL=null;gelB64=null;detectedBoxes=[];results=[];laneConfig=[];lockLevel=0;frameCount=0;showScreen('camera');startCamera();}
+
+// ═══════════════════════════════════════
+// CAMERA
+// ═══════════════════════════════════════
+async function startCamera(){
+  if(lockAF){cancelAnimationFrame(lockAF);lockAF=null;}
+  try{
+    if(videoStream)videoStream.getTracks().forEach(t=>t.stop());
+    videoStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+    const vid=document.getElementById('videoEl');vid.srcObject=videoStream;await vid.play();
+    vid.onloadedmetadata=()=>{initOverlay();runLockLoop();};
+  }catch(e){document.getElementById('lockTxt').textContent='No camera — tap Import';}
+}
+function initOverlay(){const c=document.getElementById('overlayCnv');c.width=c.parentElement.clientWidth;c.height=c.parentElement.clientHeight;}
+function runLockLoop(){
+  const c=document.getElementById('overlayCnv'),ctx=c.getContext('2d'),W=c.width,H=c.height;
+  function frame(){
+    frameCount++;ctx.clearRect(0,0,W,H);
+    const ramp=Math.min(1,frameCount/200);lockLevel=Math.min(1,ramp*0.96+Math.sin(frameCount*0.04)*0.06*(1-ramp));if(frameCount>260)lockLevel=1;
+    const locked=lockLevel>=0.99;
+    document.getElementById('lockBar').style.width=(lockLevel*100).toFixed(1)+'%';
+    document.getElementById('lockChip').textContent=locked?'✓ GEL LOCKED':`GEL LOCK ${Math.round(lockLevel*100)}%`;
+    const ring=document.getElementById('shutterRing'),txt=document.getElementById('lockTxt');
+    if(locked){ring.classList.add('ready');txt.textContent='Gel locked — tap to capture';txt.className='lock-txt on';}
+    else{ring.classList.remove('ready');txt.textContent=lockLevel<0.3?'Point camera at your gel':lockLevel<0.7?'Detecting gel edges...':'Locking in...';txt.className='lock-txt';}
+    const cx=W/2,cy=H*0.42,bw=W*0.8,bh=H*0.38,x0=cx-bw/2,y0=cy-bh/2;
+    const a=0.25+lockLevel*0.75,col=locked?`rgba(0,220,159,${a})`:`rgba(0,184,230,${a*0.85})`;
+    ctx.strokeStyle='rgba(0,220,159,0.03)';ctx.lineWidth=0.5;
+    for(let gx=0;gx<W;gx+=30){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke();}
+    for(let gy=0;gy<H;gy+=30){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke();}
+    ctx.strokeStyle=col;ctx.lineWidth=locked?2:1.5;ctx.setLineDash(locked?[]:[10,5]);ctx.strokeRect(x0,y0,bw,bh);ctx.setLineDash([]);
+    const arm=22;[[x0,y0,1,1],[x0+bw,y0,-1,1],[x0,y0+bh,1,-1],[x0+bw,y0+bh,-1,-1]].forEach(([px,py,dx,dy])=>{ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(px+dx*arm,py);ctx.lineTo(px,py);ctx.lineTo(px,py+dy*arm);ctx.stroke();});
+    if(lockLevel>0.3){const sy2=y0+(frameCount*2)%bh;const sg=ctx.createLinearGradient(x0,sy2-12,x0,sy2+12);sg.addColorStop(0,'transparent');sg.addColorStop(0.5,`rgba(0,220,159,${0.1*lockLevel})`);sg.addColorStop(1,'transparent');ctx.fillStyle=sg;ctx.fillRect(x0,sy2-12,bw,24);}
+    ctx.fillStyle=`rgba(0,220,159,${0.3+lockLevel*0.5})`;ctx.font='8px Space Mono,monospace';ctx.textAlign='left';
+    ctx.fillText(`EDGE ${Math.round(lockLevel*100)}%  BANDS:${Math.round(lockLevel*8)}  LANES:${Math.round(lockLevel*12)}`,x0+4,y0-6);
+    lockAF=requestAnimationFrame(frame);
+  }lockAF=requestAnimationFrame(frame);
+}
+function captureGel(){
+  const vid=document.getElementById('videoEl');
+  const f=document.getElementById('flashEl');f.classList.add('on');setTimeout(()=>f.classList.remove('on'),100);
+  const c=document.createElement('canvas');c.width=vid.videoWidth||1280;c.height=vid.videoHeight||720;
+  try{c.getContext('2d').drawImage(vid,0,0,c.width,c.height);}catch(e){}
+  if(lockAF){cancelAnimationFrame(lockAF);lockAF=null;}
+  orientRot=0;orientFlipH=false;orientFlipV=false;
+  loadGelToSetup(c.toDataURL('image/jpeg',0.93));
+}
+document.getElementById('fileIn').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=ev=>loadGelToSetup(ev.target.result);r.readAsDataURL(f);this.value='';
+});
+
+// ═══════════════════════════════════════
+// SETUP SCREEN + ORIENTATION
+// ═══════════════════════════════════════
+
+// Master transform state: applied on top of the raw image
+let orientRot=0;    // cumulative rotation in degrees (0,90,180,270)
+let orientFlipH=false;
+let orientFlipV=false;
+let rawImg=null;    // original unmodified Image
+
+function loadGelToSetup(dataURL){
+  orientRot=0;orientFlipH=false;orientFlipV=false;
+  rawImg=new Image();
+  rawImg.onload=()=>{
+    applyOrientation();
+    buildLaneRows(parseInt(document.getElementById('totalLanes').value)||12);
+    showScreen('setup');
+    document.getElementById('orientStatus').textContent='Tap ⬡ Auto-detect to check orientation, or rotate/flip manually.';
+  };
+  rawImg.src=dataURL;
+}
+
+// Bake current orientation into gelImg + gelB64 + gelDataURL
+function applyOrientation(){
+  const r=orientRot, fH=orientFlipH, fV=orientFlipV;
+  const sw=rawImg.naturalWidth, sh=rawImg.naturalHeight;
+  const rotated=(r===90||r===270);
+  const dw=rotated?sh:sw, dh=rotated?sw:sh;
+
+  const c=document.createElement('canvas');c.width=dw;c.height=dh;
+  const ctx=c.getContext('2d');
+
+  // Apply transform: translate to center, rotate, flip, draw
+  ctx.save();
+  ctx.translate(dw/2,dh/2);
+  ctx.rotate(r*Math.PI/180);
+  if(fH)ctx.scale(-1,1);
+  if(fV)ctx.scale(1,-1);
+  ctx.drawImage(rawImg,-sw/2,-sh/2);
+  ctx.restore();
+
+  const dataURL=c.toDataURL('image/jpeg',0.93);
+  gelDataURL=dataURL;
+  gelB64=dataURL.split(',')[1];
+  gelImg=new Image();
+  gelImg.src=dataURL;
+
+  // Update the setup thumbnail (canvas element)
+  const thumb=document.getElementById('setupThumb');
+  const maxW=thumb.parentElement.clientWidth||360;
+  const scale=Math.min(maxW/dw,200/dh);
+  thumb.width=Math.round(dw*scale);
+  thumb.height=Math.round(dh*scale);
+  thumb.getContext('2d').drawImage(c,0,0,thumb.width,thumb.height);
+}
+
+function rotate(deg){
+  orientRot=(orientRot+deg+360)%360;
+  applyOrientation();
+  document.getElementById('orientStatus').textContent=`Rotated ${orientRot>0?orientRot+'° clockwise':'0°'} · ${orientFlipH?'flipped H ':''}${orientFlipV?'flipped V':''}`.trim();
+}
+
+function flip(axis){
+  if(axis==='h')orientFlipH=!orientFlipH;
+  else orientFlipV=!orientFlipV;
+  applyOrientation();
+  document.getElementById('orientStatus').textContent=`Rotation: ${orientRot}° · FlipH: ${orientFlipH} · FlipV: ${orientFlipV}`;
+}
+
+async function autoOrient(){
+  const btn=document.querySelector('.ob-ai');
+  btn.textContent='⬡ Detecting...';
+  btn.disabled=true;
+  document.getElementById('orientStatus').textContent='Asking AI to identify ladder position and orientation...';
+
+  try{
+    const raw=await callClaude(`Look at this western blot gel image carefully.
+
+Find the molecular weight LADDER (also called marker) — it appears as a series of bands at multiple sizes, often with colored bands or a distinct pattern, usually on one edge of the gel.
+
+Based on convention, the ladder should be on the LEFT side of the gel.
+
+Answer ONLY with this JSON (no markdown):
+{
+  "ladderSide": "<left|right|top|bottom|unclear>",
+  "gelOrientation": "<normal|rotate90cw|rotate90ccw|rotate180|fliphorizontal>",
+  "neededTransform": "<none|rotate90cw|rotate90ccw|rotate180|fliphorizontal|flipvertical>",
+  "confidence": <0-1>,
+  "reasoning": "<one sentence>"
+}`);
+
+    const ai=tryParse(raw);
+    if(!ai){
+      document.getElementById('orientStatus').textContent='Could not parse AI response. Please orient manually.';
+      btn.textContent='⬡ Auto-detect orientation';btn.disabled=false;return;
+    }
+
+    const conf=ai.confidence||0;
+    const reasoning=ai.reasoning||'';
+    const ladder=ai.ladderSide||'unclear';
+    const needed=ai.neededTransform||'none';
+
+    document.getElementById('orientStatus').textContent=
+      `AI: ladder on ${ladder} side · ${reasoning} (confidence ${Math.round(conf*100)}%)`;
+
+    if(conf<0.4){
+      document.getElementById('orientStatus').textContent+=` — Low confidence, please verify manually.`;
+      btn.textContent='⬡ Auto-detect orientation';btn.disabled=false;return;
+    }
+
+    // Apply the needed transform
+    let applied='';
+    if(needed==='rotate90cw'){rotate(90);applied='Rotated 90° clockwise';}
+    else if(needed==='rotate90ccw'){rotate(-90);applied='Rotated 90° counter-clockwise';}
+    else if(needed==='rotate180'){rotate(180);applied='Rotated 180°';}
+    else if(needed==='fliphorizontal'){flip('h');applied='Flipped horizontally';}
+    else if(needed==='flipvertical'){flip('v');applied='Flipped vertically';}
+    else{applied='No transform needed — orientation looks correct';}
+
+    document.getElementById('orientStatus').textContent=
+      `${applied} · Ladder on ${ladder} · ${reasoning}`;
+
+  }catch(e){
+    document.getElementById('orientStatus').textContent=`Auto-detect failed: ${e.message}`;
+  }
+  btn.textContent='⬡ Auto-detect orientation';btn.disabled=false;
+}
+document.getElementById('totalLanes').addEventListener('input',function(){
+  buildLaneRows(parseInt(this.value)||1);
+});
+function buildLaneRows(n){
+  const wrap=document.getElementById('laneRowsWrap');
+  const existing=[];
+  for(let i=0;i<100;i++){
+    const ne=document.getElementById(`lname-${i}`);const ce=document.getElementById(`lconc-${i}`);const se=document.getElementById(`lskip-${i}`);
+    if(!ne)break;existing.push({name:ne.value,conc:ce.value,skip:se.checked});
+  }
+  wrap.innerHTML='';
+  for(let i=0;i<n;i++){
+    const col=COLORS[i%COLORS.length];
+    const prev=existing[i]||{name:'',conc:'',skip:false};
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:4px;margin-bottom:6px';
+    d.innerHTML=`
+      <div class="lane-num-cell" style="color:${col}">${i+1}</div>
+      <div style="flex:1"><input class="lane-inp" id="lname-${i}" type="text" placeholder="Lane ${i+1} name" value="${prev.name}"></div>
+      <div style="width:76px"><input class="lane-inp" id="lconc-${i}" type="number" step="0.0001" placeholder="mg/mL" value="${prev.conc}" style="font-family:var(--mono);font-size:11px"></div>
+      <div class="lane-skip-cell" style="width:28px;text-align:center"><input type="checkbox" id="lskip-${i}" ${prev.skip?'checked':''}></div>
+    `;
+    wrap.appendChild(d);
+  }
+}
+buildLaneRows(12);
+
+// ═══════════════════════════════════════
+// GO TO ANALYZE — read setup, ask Claude for layout, then do CV
+// ═══════════════════════════════════════
+function goAnalyze(){
+  const n=parseInt(document.getElementById('totalLanes').value)||12;
+  laneConfig=[];
+  for(let i=0;i<n;i++){
+    const name=document.getElementById(`lname-${i}`)?.value.trim()||`Lane ${i+1}`;
+    const concStr=document.getElementById(`lconc-${i}`)?.value.trim();
+    const conc=concStr&&!isNaN(parseFloat(concStr))?parseFloat(concStr):null;
+    const skip=document.getElementById(`lskip-${i}`)?.checked||false;
+    laneConfig.push({name,conc,skip});
+  }
+
+  // Setup gel viewer
+  detectedBoxes=[];
+  document.getElementById('phaseContainer').innerHTML='';
+  document.getElementById('confirmSection').style.display='none';
+  showScreen('analyze');
+  setupGelViewer();
+  setTimeout(runDetection,300);
+}
+
+// ═══════════════════════════════════════
+// GEL VIEWER (zoom/pan — view only, no drawing)
+// ═══════════════════════════════════════
+function setupGelViewer(){
+  const viewer=document.getElementById('gelViewer');
+  const cnv=document.getElementById('gelCnv');
+  cnv.width=gelImg.naturalWidth;cnv.height=gelImg.naturalHeight;
+  cnv.style.width=gelImg.naturalWidth+'px';cnv.style.height=gelImg.naturalHeight+'px';
+  baseScale=Math.min(viewer.clientWidth/gelImg.naturalWidth,280/gelImg.naturalHeight);
+  zoom=1;panX=0;panY=0;applyTransform();drawGel();
+  attachViewerEvents(viewer);
+}
+function applyTransform(){
+  const cnv=document.getElementById('gelCnv'),viewer=document.getElementById('gelViewer');
+  const vW=viewer.clientWidth,vH=viewer.clientHeight,s=baseScale*zoom;
+  const imgW=cnv.width*s,imgH=cnv.height*s;
+  const maxPX=Math.max(0,imgW/2),maxPY=Math.max(0,imgH/2);
+  panX=Math.max(-maxPX,Math.min(maxPX,panX));panY=Math.max(-maxPY,Math.min(maxPY,panY));
+  const ox=(vW-imgW)/2+panX,oy=(vH-imgH)/2+panY;
+  cnv.style.transform=`translate(${ox}px,${oy}px) scale(${s})`;
+  cnv.style.transformOrigin='0 0';
+  document.getElementById('zoomLbl').textContent=Math.round(zoom*100)+'%';
+}
+function zoomBy(delta,fwx,fwy){
+  const viewer=document.getElementById('gelViewer'),cnv=document.getElementById('gelCnv');
+  if(fwx==null){fwx=viewer.clientWidth/2;fwy=viewer.clientHeight/2;}
+  const old=zoom;zoom=Math.max(0.5,Math.min(12,zoom+delta));
+  const s0=baseScale*old,s1=baseScale*zoom;
+  const ox0=(viewer.clientWidth-cnv.width*s0)/2+panX;const oy0=(viewer.clientHeight-cnv.height*s0)/2+panY;
+  panX=fwx-zoom/old*(fwx-ox0)-(viewer.clientWidth-cnv.width*s1)/2;
+  panY=fwy-zoom/old*(fwy-oy0)-(viewer.clientHeight-cnv.height*s1)/2;
+  applyTransform();
+}
+function resetZoom(){zoom=1;panX=0;panY=0;applyTransform();}
+function setInteractMode(m){
+  interactMode=m;
+  document.getElementById('mtab-pan').className='mtab'+(m==='pan'?' active-pan':'');
+  document.getElementById('mtab-drag').className='mtab'+(m==='drag'?' active-drag':'');
+  const hint=document.getElementById('dragHint');
+  if(m==='drag'){hint.textContent='Tap a box to select (white outline), then drag it to the correct band position.';hint.style.display='block';}
+  else{hint.style.display='none';}
+  dragBoxIdx=-1;drawGel();
+}
+
+// Convert viewer-relative coords to image/canvas pixel coords
+function viewerToImg(vx,vy){
+  const viewer=document.getElementById('gelViewer'),cnv=document.getElementById('gelCnv');
+  const s=baseScale*zoom;
+  const ox=(viewer.clientWidth-cnv.width*s)/2+panX;
+  const oy=(viewer.clientHeight-cnv.height*s)/2+panY;
+  return{x:(vx-ox)/s,y:(vy-oy)/s};
+}
+
+function hitTestBoxes(ix,iy){
+  // Return index of first box that contains image point ix,iy
+  for(let i=0;i<detectedBoxes.length;i++){
+    const b=detectedBoxes[i];
+    if(ix>=b.x&&ix<=b.x+b.w&&iy>=b.y&&iy<=b.y+b.h)return i;
+  }
+  return -1;
+}
+
+function attachViewerEvents(viewer){
+  viewer.addEventListener('wheel',e=>{e.preventDefault();const r=viewer.getBoundingClientRect();zoomBy(e.deltaY<0?0.3:-0.3,e.clientX-r.left,e.clientY-r.top);},{passive:false});
+
+  // ── MOUSE ──
+  viewer.addEventListener('mousedown',e=>{
+    const r=viewer.getBoundingClientRect();
+    const vx=e.clientX-r.left,vy=e.clientY-r.top;
+    if(interactMode==='drag'&&detectedBoxes.length>0){
+      const img=viewerToImg(vx,vy);
+      const hit=hitTestBoxes(img.x,img.y);
+      if(hit>=0){
+        // start dragging this box
+        isDraggingBox=true;dragBoxIdx=hit;
+        dragOffX=img.x-detectedBoxes[hit].x;
+        dragOffY=img.y-detectedBoxes[hit].y;
+        viewer.style.cursor='grabbing';
+      } else {
+        // tap empty area — deselect
+        dragBoxIdx=-1;
+      }
+      drawGel();return;
+    }
+    isPanning=true;panSX=vx;panSY=vy;panOX=panX;panOY=panY;viewer.style.cursor='grabbing';
+  });
+  viewer.addEventListener('mousemove',e=>{
+    const r=viewer.getBoundingClientRect();
+    const vx=e.clientX-r.left,vy=e.clientY-r.top;
+    if(isDraggingBox&&dragBoxIdx>=0){
+      const img=viewerToImg(vx,vy);
+      const b=detectedBoxes[dragBoxIdx];
+      b.x=Math.round(img.x-dragOffX);
+      b.y=Math.round(img.y-dragOffY);
+      drawGel();return;
+    }
+    if(isPanning){panX=panOX+(vx-panSX);panY=panOY+(vy-panSY);applyTransform();}
+  });
+  viewer.addEventListener('mouseup',()=>{isDraggingBox=false;isPanning=false;viewer.style.cursor=interactMode==='drag'?'crosshair':'default';});
+  viewer.addEventListener('mouseleave',()=>{isDraggingBox=false;isPanning=false;});
+
+  // ── TOUCH ──
+  viewer.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    if(e.touches.length===2){
+      isDraggingBox=false;touchMode='pinch';
+      const t0=e.touches[0],t1=e.touches[1];
+      pinchDist0=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);pinchZoom0=zoom;
+      return;
+    }
+    const r=viewer.getBoundingClientRect();
+    const vx=e.touches[0].clientX-r.left,vy=e.touches[0].clientY-r.top;
+    if(interactMode==='drag'&&detectedBoxes.length>0){
+      const img=viewerToImg(vx,vy);
+      const hit=hitTestBoxes(img.x,img.y);
+      if(hit>=0){
+        touchMode='dragbox';isDraggingBox=true;dragBoxIdx=hit;
+        dragOffX=img.x-detectedBoxes[hit].x;dragOffY=img.y-detectedBoxes[hit].y;
+      } else {
+        touchMode='pan';dragBoxIdx=-1;
+        panSX=vx;panSY=vy;panOX=panX;panOY=panY;
+      }
+      drawGel();return;
+    }
+    touchMode='pan';panSX=vx;panSY=vy;panOX=panX;panOY=panY;
+  },{passive:false});
+
+  viewer.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(touchMode==='pinch'&&e.touches.length===2){
+      const t0=e.touches[0],t1=e.touches[1];
+      zoom=Math.max(0.5,Math.min(12,pinchZoom0*Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY)/pinchDist0));
+      applyTransform();return;
+    }
+    const r=viewer.getBoundingClientRect();
+    const vx=e.touches[0].clientX-r.left,vy=e.touches[0].clientY-r.top;
+    if(touchMode==='dragbox'&&isDraggingBox&&dragBoxIdx>=0){
+      const img=viewerToImg(vx,vy);
+      detectedBoxes[dragBoxIdx].x=Math.round(img.x-dragOffX);
+      detectedBoxes[dragBoxIdx].y=Math.round(img.y-dragOffY);
+      drawGel();return;
+    }
+    if(touchMode==='pan'){panX=panOX+(vx-panSX);panY=panOY+(vy-panSY);applyTransform();}
+  },{passive:false});
+
+  viewer.addEventListener('touchend',e=>{
+    isDraggingBox=false;
+    if(e.touches.length===0)touchMode='idle';
+  },{passive:false});
+}
+function drawGel(){
+  const cnv=document.getElementById('gelCnv'),ctx=cnv.getContext('2d');
+  ctx.clearRect(0,0,cnv.width,cnv.height);
+  ctx.drawImage(gelImg,0,0,cnv.width,cnv.height);
+  const lw=Math.max(1,2/(baseScale*zoom));
+  const lw2=Math.max(1.5,3/(baseScale*zoom));
+  const fs=Math.max(8,11/(baseScale*zoom));
+  detectedBoxes.forEach((b,i)=>{
+    const isSelected=(i===dragBoxIdx);
+    const col=b.type==='bg'?'#f5c842':b.type==='ctrl'?'#00dc9f':COLORS[b.laneIdx%COLORS.length];
+    ctx.strokeStyle=isSelected?'#ffffff':col+'cc';
+    ctx.lineWidth=isSelected?lw2:lw;
+    if(isSelected){ctx.setLineDash([Math.max(3,6/(baseScale*zoom)),Math.max(2,4/(baseScale*zoom))]);}
+    ctx.strokeRect(b.x,b.y,b.w,b.h);
+    ctx.setLineDash([]);
+    ctx.fillStyle=isSelected?col+'40':col+'18';ctx.fillRect(b.x,b.y,b.w,b.h);
+    ctx.fillStyle=isSelected?'#ffffff':col+'f0';
+    ctx.font=`bold ${fs}px DM Sans,sans-serif`;ctx.textAlign='center';
+    const lbl=b.type==='bg'?'BG':b.type==='ctrl'?`C${b.laneIdx+1}`:`L${b.laneIdx+1}`;
+    ctx.fillText(lbl,b.x+b.w/2,b.y-lw);
+  });
+}
+
+// ═══════════════════════════════════════
+// BOX CHIP LIST + DELETE
+// ═══════════════════════════════════════
+function renderBoxChips(){
+  const wrap=document.getElementById('boxChipList');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  detectedBoxes.forEach((b,i)=>{
+    const typeClass=b.type==='poi'?'chip-poi':b.type==='ctrl'?'chip-ctrl':'chip-bg';
+    const lbl=b.type==='bg'?`BG-L${b.laneIdx+1}`:b.type==='ctrl'?`C${b.laneIdx+1}`:`L${b.laneIdx+1}`;
+    const chip=document.createElement('div');
+    chip.className=`box-chip ${typeClass}`;
+    chip.innerHTML=`<span>${lbl}</span><span class="del-x" title="Delete">×</span>`;
+    chip.querySelector('.del-x').addEventListener('click',e=>{
+      e.stopPropagation();
+      deleteBox(i);
+    });
+    // Click body to highlight/select
+    chip.addEventListener('click',()=>{
+      dragBoxIdx=i;
+      drawGel();
+      // scroll gel into view
+      document.getElementById('gelViewer').scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+    wrap.appendChild(chip);
+  });
+}
+
+function deleteBox(i){
+  detectedBoxes.splice(i,1);
+  if(dragBoxIdx===i)dragBoxIdx=-1;
+  else if(dragBoxIdx>i)dragBoxIdx--;
+  drawGel();
+  renderBoxChips();
+}
+
+// ═══════════════════════════════════════
+// PHASE CARD HELPERS
+// ═══════════════════════════════════════
+function addPhase(id,num,title){
+  const d=document.createElement('div');d.className='phase-card';d.id='pc-'+id;
+  d.innerHTML=`<div class="phase-head"><div class="phase-num">${String(num).padStart(2,'0')}</div><div class="phase-info"><div class="phase-title">${title}</div><div class="phase-detail" id="pd-${id}">Awaiting...</div></div><div class="phase-pill pill-p" id="pp-${id}">PENDING</div></div><div class="prog-track"><div class="prog-fill" id="pf-${id}"></div></div>`;
+  document.getElementById('phaseContainer').appendChild(d);
+}
+function phaseRun(id,detail){document.getElementById('pc-'+id).className='phase-card running';document.getElementById('pd-'+id).textContent=detail;document.getElementById('pp-'+id).textContent='RUNNING';document.getElementById('pp-'+id).className='phase-pill pill-r';animProg(id);}
+function phaseDone(id,detail,ok=true){document.getElementById('pc-'+id).className='phase-card done';document.getElementById('pd-'+id).textContent=detail;document.getElementById('pp-'+id).textContent=ok?'DONE':'WARN';document.getElementById('pp-'+id).className='phase-pill '+(ok?'pill-d':'pill-w');document.getElementById('pf-'+id).style.width='100%';}
+function animProg(id){let w=0;const bar=document.getElementById('pf-'+id);const iv=setInterval(()=>{const pp=document.getElementById('pp-'+id);if(!bar||!pp||pp.textContent==='DONE'||pp.textContent==='WARN'){clearInterval(iv);return;}w=Math.min(88,w+Math.random()*5+1);bar.style.width=w+'%';},180);}
+
+// ═══════════════════════════════════════
+// DETECTION PIPELINE
+// ═══════════════════════════════════════
+async function runDetection(){
+  addPhase('ai',1,'AI layout interpretation');
+  addPhase('cv',2,'Computer vision — signal band finding');
+  addPhase('roi',3,'Fixed ROI enforcement');
+  addPhase('bg',4,'Per-lane background placement');
+
+  const nL=laneConfig.length;
+  const skipInfo=laneConfig.map((l,i)=>l.skip?`lane ${i+1} skipped`:null).filter(Boolean).join(', ');
+  const bandPos=document.getElementById('bandPosition').value;
+
+  // ── Build pixel buffer ──
+  const W=gelImg.naturalWidth,H=gelImg.naturalHeight;
+  const oc=document.createElement('canvas');oc.width=W;oc.height=H;
+  const octx=oc.getContext('2d');octx.drawImage(gelImg,0,0);
+  const px=octx.getImageData(0,0,W,H).data;
+
+  function rectMean(x,y,w,h){
+    x=Math.max(0,Math.round(x));y=Math.max(0,Math.round(y));
+    w=Math.max(1,Math.min(Math.round(w),W-x));h=Math.max(1,Math.min(Math.round(h),H-y));
+    let s=0,n=0;
+    for(let ry=y;ry<y+h;ry++)for(let rx=x;rx<x+w;rx++){const i=(ry*W+rx)*4;s+=px[i]*0.299+px[i+1]*0.587+px[i+2]*0.114;n++;}
+    return n>0?s/n:200;
+  }
+
+  // ── STEP 1: AI for gel bounds and band row position ──
+  phaseRun('ai','Asking AI to locate signal band row and gel bounds...');
+  let aiLayout=null;
+  try{
+    const raw=await callClaude(`You are analyzing a western blot gel image used to quantify lysosome protein concentration.
+
+User info: ${nL} total lanes, skipped: ${skipInfo||'none'}.
+Band position hint: ${bandPos}.
+
+CRITICAL: Lane number labels (L1, L2, C1, C2 etc.) appear as TEXT at the TOP of the image — these are NOT protein bands. Ignore all text/labels.
+
+The SIGNAL is ONE horizontal row of dark smeared bands inside the gel body (the lysosome protein). Find this row.
+
+Return ONLY valid JSON:
+{
+  "gelLeft": <0-1 fraction where gel lane content starts>,
+  "gelRight": <0-1 fraction where gel lane content ends>,
+  "gelTop": <0-1 fraction where gel matrix begins — BELOW any text labels>,
+  "gelBottom": <0-1 fraction where gel matrix ends>,
+  "labelZoneBottom": <0-1 fraction — how far down text labels extend>,
+  "signalRowFraction": <0-1 fraction of image height for the ONE signal band row center>,
+  "signalRowConfidence": <0-1>,
+  "notes": "<one sentence>"
+}`);
+    aiLayout=tryParse(raw);
+    if(aiLayout&&aiLayout.signalRowFraction!=null){
+      phaseDone('ai',`Signal band at ${(aiLayout.signalRowFraction*100).toFixed(0)}% height · gel T${(aiLayout.gelTop*100).toFixed(0)}% B${(aiLayout.gelBottom*100).toFixed(0)}% · ${aiLayout.notes||''}`);
+    } else {
+      aiLayout=null;
+      phaseDone('ai','Could not parse AI response — using CV only',false);
+    }
+  }catch(e){
+    phaseDone('ai',`API unavailable — CV only`,false);
+  }
+
+  // ── STEP 2: CV to find signal band row ──
+  phaseRun('cv','Scanning pixel columns for darkest signal band...');
+  await sleep(80);
+
+  // Gel bounds
+  const labelZone=aiLayout?.labelZoneBottom||0.12;
+  const gL=Math.round((aiLayout?.gelLeft||0.02)*W);
+  const gR=Math.round((aiLayout?.gelRight||0.98)*W);
+  const gT=Math.round(Math.max(aiLayout?.gelTop||labelZone, labelZone)*H);
+  const gB=Math.round((aiLayout?.gelBottom||0.95)*H);
+  const gW=Math.max(1,gR-gL),gH=Math.max(1,gB-gT);
+  const laneW=gW/nL;
+
+  // If user specified a position hint, restrict search zone
+  let searchTop=gT, searchBot=gB;
+  if(bandPos==='top')   {searchBot=Math.round(gT+gH*0.45);}
+  if(bandPos==='bottom'){searchTop=Math.round(gT+gH*0.55);}
+  if(bandPos==='middle'){searchTop=Math.round(gT+gH*0.25);searchBot=Math.round(gT+gH*0.75);}
+
+  // Build horizontal profile: sliding window darkness score
+  const winH=Math.max(6,Math.round(gH*0.04));
+  const step=2;
+  const profile=[];
+  for(let y=searchTop;y<searchBot-winH;y+=step){
+    let sum=0,sum2=0,n=0;
+    for(let x=gL;x<gR;x+=6){const g=rectMean(x,y,1,winH);sum+=g;sum2+=g*g;n++;}
+    const mean=n>0?sum/n:200;
+    const variance=n>0?sum2/n-mean*mean:0;
+    profile.push({y,mean,darkness:255-mean,variance});
+  }
+
+  // Find the single darkest band row (with good contrast)
+  let signalY;
+  if(aiLayout&&aiLayout.signalRowFraction!=null&&aiLayout.signalRowConfidence>0.4){
+    // AI hint: search ±10% around it
+    const hintY=aiLayout.signalRowFraction*H;
+    const local=profile.filter(p=>Math.abs(p.y-hintY)<=H*0.1);
+    if(local.length){
+      const best=local.reduce((a,b)=>(a.darkness+a.variance*0.08)>(b.darkness+b.variance*0.08)?a:b);
+      signalY=Math.round(best.y+winH/2);
+    } else { signalY=Math.round(hintY); }
+  } else {
+    // Pure CV: darkest + highest contrast row
+    const best=profile.reduce((a,b)=>(a.darkness+a.variance*0.08)>(b.darkness+b.variance*0.08)?a:b);
+    signalY=Math.round(best.y+winH/2);
+  }
+
+  phaseDone('cv',`Signal band row at y=${signalY}px (${(signalY/H*100).toFixed(0)}% of image height)`);
+
+  // ── STEP 3: Fixed ROI — per lane, refine Y to darkest spot ──
+  phaseRun('roi','Placing fixed ROI boxes on signal band per lane...');
+  await sleep(60);
+
+  const bandH=Math.max(8,Math.round(gH*0.045));
+  roiW=Math.round(laneW*0.72);
+  roiH=bandH;
+  const halfSearch=Math.round(gH*0.07);
+
+  const finalBands=[];
+  laneConfig.forEach((lane,li)=>{
+    if(lane.skip)return;
+    const lx=Math.round(gL+li*laneW);
+    const lw2=Math.round(laneW);
+    // Refine Y per lane: find darkest position within ±halfSearch
+    const sy=Math.max(gT,signalY-halfSearch);
+    const ey=Math.min(gB-bandH,signalY+halfSearch);
+    let bestY=signalY,bestD=-Infinity;
+    for(let y=sy;y<=ey;y+=2){
+      const d=255-rectMean(lx,y,lw2,bandH);
+      if(d>bestD){bestD=d;bestY=y;}
+    }
+    finalBands.push({
+      laneIdx:li,type:'signal',
+      x:Math.round(lx+(lw2-roiW)/2),
+      y:bestY,w:roiW,h:roiH
+    });
+  });
+
+  phaseDone('roi',`${finalBands.length} signal boxes · fixed ${roiW}×${roiH}px ROI`);
+
+  // ── STEP 4: Per-lane BG boxes — same fixed ROI, best empty row ──
+  phaseRun('bg','Placing per-lane background boxes in empty gel region...');
+  await sleep(60);
+
+  // Find the brightest (most empty) row that is far from the signal row
+  const bgCandidates=profile.filter(p=>Math.abs(p.y-signalY)>roiH*2.5);
+  let bgRowY;
+  if(bgCandidates.length){
+    const brightest=bgCandidates.reduce((a,b)=>a.mean>b.mean?a:b);
+    bgRowY=Math.round(brightest.y);
+  } else {
+    // Furthest row from signal
+    bgRowY=signalY>gT+gH/2?Math.round(gT+roiH):Math.round(gB-roiH*2);
+  }
+
+  finalBands.forEach(sb=>{
+    finalBands.push({
+      laneIdx:sb.laneIdx,type:'bg',
+      x:sb.x,y:Math.max(0,bgRowY),
+      w:roiW,h:roiH
+    });
+  });
+
+  phaseDone('bg',`${finalBands.filter(b=>b.type==='bg').length} BG boxes at y=${bgRowY}px · mean gray ${rectMean(Math.round(gL+gW*0.3),bgRowY,Math.round(gW*0.4),roiH).toFixed(1)}`);
+
+  detectedBoxes=finalBands;
+  drawGel();
+  renderBoxChips();
+
+  document.getElementById('modeToggle').style.display='flex';
+  setInteractMode('pan');
+
+  const activeCount=laneConfig.filter(l=>!l.skip).length;
+  const stdCount=laneConfig.filter(l=>!l.skip&&l.conc!==null).length;
+  document.getElementById('confirmInfo').innerHTML=`
+    <b>Detection complete.</b> Zoom in to verify signal boxes sit on your lysosome bands.<br>
+    <span style="color:var(--gold)">Fixed ROI: ${roiW}×${roiH}px</span> — same box for every lane and background (ImageJ protocol).<br>
+    Active lanes: <b>${activeCount}</b> · Standard curve points: <b>${stdCount}</b><br><br>
+    <b>Delete unwanted boxes</b> using chips below. <b>Move boxes</b> using ⊹ mode above, then calculate.
+  `;
+  document.getElementById('confirmSection').style.display='block';
+  setTimeout(()=>document.getElementById('confirmSection').scrollIntoView({behavior:'smooth',block:'nearest'}),300);
+}
+
+
+
+
+// ═══════════════════════════════════════
+// BOX CHIP LIST + DELETE
+// ═══════════════════════════════════════
+function renderBoxChips(){
+  const wrap=document.getElementById('boxChipList');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  detectedBoxes.forEach((b,i)=>{
+    const typeClass=b.type==='bg'?'chip-bg':b.type==='signal'?'chip-poi':'chip-ctrl';
+    const lbl=b.type==='bg'?`BG-${b.laneIdx+1}`:`C${b.laneIdx+1}`;
+    const chip=document.createElement('div');
+    chip.className=`box-chip ${typeClass}`;
+    chip.innerHTML=`<span>${lbl}</span><span class="del-x" title="Delete">×</span>`;
+    chip.querySelector('.del-x').addEventListener('click',e=>{
+      e.stopPropagation();deleteBox(i);
+    });
+    chip.addEventListener('click',()=>{
+      dragBoxIdx=i;drawGel();
+      document.getElementById('gelViewer').scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+    wrap.appendChild(chip);
+  });
+}
+function deleteBox(i){
+  detectedBoxes.splice(i,1);
+  if(dragBoxIdx===i)dragBoxIdx=-1;
+  else if(dragBoxIdx>i)dragBoxIdx--;
+  drawGel();renderBoxChips();
+}
+
+// ═══════════════════════════════════════
+// PHASE CARD HELPERS
+// ═══════════════════════════════════════
+function addPhase(id,num,title){
+  const d=document.createElement('div');d.className='phase-card';d.id='pc-'+id;
+  d.innerHTML=`<div class="phase-head"><div class="phase-num">${String(num).padStart(2,'0')}</div><div class="phase-info"><div class="phase-title">${title}</div><div class="phase-detail" id="pd-${id}">Awaiting...</div></div><div class="phase-pill pill-p" id="pp-${id}">PENDING</div></div><div class="prog-track"><div class="prog-fill" id="pf-${id}"></div></div>`;
+  document.getElementById('phaseContainer').appendChild(d);
+}
+function phaseRun(id,detail){document.getElementById('pc-'+id).className='phase-card running';document.getElementById('pd-'+id).textContent=detail;document.getElementById('pp-'+id).textContent='RUNNING';document.getElementById('pp-'+id).className='phase-pill pill-r';animProg(id);}
+function phaseDone(id,detail,ok=true){document.getElementById('pc-'+id).className='phase-card done';document.getElementById('pd-'+id).textContent=detail;document.getElementById('pp-'+id).textContent=ok?'DONE':'WARN';document.getElementById('pp-'+id).className='phase-pill '+(ok?'pill-d':'pill-w');document.getElementById('pf-'+id).style.width='100%';}
+function animProg(id){let w=0;const bar=document.getElementById('pf-'+id);const iv=setInterval(()=>{const pp=document.getElementById('pp-'+id);if(!bar||!pp||pp.textContent==='DONE'||pp.textContent==='WARN'){clearInterval(iv);return;}w=Math.min(88,w+Math.random()*5+1);bar.style.width=w+'%';},180);}
+
+// ═══════════════════════════════════════
+// PIXEL READING
+// ═══════════════════════════════════════
+let _offCanvas=null;
+function getOC(){
+  if(!_offCanvas||_offCanvas.width!==gelImg.naturalWidth){
+    _offCanvas=document.createElement('canvas');
+    _offCanvas.width=gelImg.naturalWidth;_offCanvas.height=gelImg.naturalHeight;
+    _offCanvas.getContext('2d').drawImage(gelImg,0,0);
+  }
+  return _offCanvas;
+}
+function getMeanGray(x,y,w,h){
+  const oc=getOC(),ctx=oc.getContext('2d');
+  const ix=Math.max(0,Math.round(x)),iy=Math.max(0,Math.round(y));
+  const iw=Math.max(1,Math.min(Math.round(w),oc.width-ix));
+  const ih=Math.max(1,Math.min(Math.round(h),oc.height-iy));
+  const d=ctx.getImageData(ix,iy,iw,ih).data;
+  let s=0,n=0;
+  for(let i=0;i<d.length;i+=4){s+=d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114;n++;}
+  return n>0?s/n:128;
+}
+
+// ═══════════════════════════════════════
+// CALCULATION
+// Signal only: net = (255 - signalMean) - (255 - bgMean) = bgMean - signalMean
+// Plot net vs mg/mL for standard curve + R²
+// ═══════════════════════════════════════
+function runCalc(){
+  const sigBoxes=detectedBoxes.filter(b=>b.type==='signal');
+  const bgBoxes=detectedBoxes.filter(b=>b.type==='bg');
+
+  // Build results for each lane that still has a signal box
+  const laneIndices=[...new Set(sigBoxes.map(b=>b.laneIdx))].sort((a,b)=>a-b);
+
+  results=laneIndices.map(laneIdx=>{
+    const cfg=laneConfig[laneIdx]||{name:`Lane ${laneIdx+1}`,conc:null,skip:false};
+    const sig=sigBoxes.find(b=>b.laneIdx===laneIdx);
+    const bgBox=bgBoxes.find(b=>b.laneIdx===laneIdx);
+
+    const sigMean=sig?getMeanGray(sig.x,sig.y,sig.w,sig.h):200;
+
+    let bgMean;
+    if(bgBox){
+      bgMean=getMeanGray(bgBox.x,bgBox.y,bgBox.w,bgBox.h);
+    } else if(bgBoxes.length){
+      // fallback: average of all remaining BG boxes
+      bgMean=bgBoxes.reduce((s,b)=>s+getMeanGray(b.x,b.y,b.w,b.h),0)/bgBoxes.length;
+    } else {
+      bgMean=sigMean+10; // rough fallback
+    }
+
+    // ImageJ formula: invert both, subtract
+    const invSig=255-sigMean;
+    const invBg=255-bgMean;
+    const net=Math.max(0,invSig-invBg);  // = bgMean - sigMean clamped to 0
+
+    return{idx:laneIdx,name:cfg.name,conc:cfg.conc,sigMean,bgMean,invSig,invBg,net};
+  });
+
+  renderResults();
+}
+
+// ═══════════════════════════════════════
+// REGRESSION
+// ═══════════════════════════════════════
+function linReg(pts){
+  const n=pts.length;if(n<2)return null;
+  const sx=pts.reduce((s,p)=>s+p.x,0),sy=pts.reduce((s,p)=>s+p.y,0);
+  const sxy=pts.reduce((s,p)=>s+p.x*p.y,0),sx2=pts.reduce((s,p)=>s+p.x*p.x,0);
+  const mx=sx/n,my=sy/n;
+  const denom=n*sx2-sx*sx;
+  if(Math.abs(denom)<1e-10)return null;
+  const slope=(n*sxy-sx*sy)/denom;
+  const intercept=(sy-slope*sx)/n;
+  const ssTot=pts.reduce((s,p)=>s+Math.pow(p.y-my,2),0);
+  const ssRes=pts.reduce((s,p)=>s+Math.pow(p.y-(slope*p.x+intercept),2),0);
+  const r2=ssTot>0?1-ssRes/ssTot:0;
+  return{slope,intercept,r2};
+}
+
+// ═══════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════
+function renderResults(){
+  showScreen('results');
+
+  // Annotated gel image
+  const cnv=document.getElementById('annotCnv');
+  const maxW=cnv.parentElement.clientWidth-28;
+  const s=Math.min(maxW/gelImg.naturalWidth,220/gelImg.naturalHeight);
+  cnv.width=Math.round(gelImg.naturalWidth*s);cnv.height=Math.round(gelImg.naturalHeight*s);
+  const ctx=cnv.getContext('2d');ctx.drawImage(gelImg,0,0,cnv.width,cnv.height);
+  detectedBoxes.forEach(b=>{
+    const col=b.type==='bg'?'#f5c842':COLORS[b.laneIdx%COLORS.length];
+    const rx=b.x*s,ry=b.y*s,rw=b.w*s,rh=b.h*s;
+    ctx.strokeStyle=col+'cc';ctx.lineWidth=1.5;ctx.strokeRect(rx,ry,rw,rh);
+    ctx.fillStyle=col+'20';ctx.fillRect(rx,ry,rw,rh);
+    if(b.type==='signal'){
+      const res=results.find(r=>r.idx===b.laneIdx);
+      if(res){
+        ctx.fillStyle=col+'f0';
+        ctx.font=`bold ${Math.max(7,Math.round(rw*0.25))}px Bebas Neue,sans-serif`;
+        ctx.textAlign='center';
+        ctx.fillText(res.net.toFixed(1),rx+rw/2,ry-1);
+      }
+    }
+  });
+  ctx.fillStyle='rgba(0,220,159,0.6)';ctx.font='7px Space Mono,monospace';ctx.textAlign='left';
+  ctx.fillText('■ signal  ■ background  labels = net density',4,cnv.height-4);
+
+  // Stats
+  const nets=results.map(r=>r.net);
+  const maxN=Math.max(...nets,0.01),avgN=nets.reduce((s,v)=>s+v,0)/nets.length;
+  document.getElementById('statRow').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${results.length}</div><div class="stat-lbl">Lanes</div></div>
+    <div class="stat-card"><div class="stat-val cyan">${avgN.toFixed(1)}</div><div class="stat-lbl">Avg net</div></div>
+    <div class="stat-card"><div class="stat-val gold">${maxN.toFixed(1)}</div><div class="stat-lbl">Max net</div></div>
+    <div class="stat-card"><div class="stat-val orange">${results.filter(r=>r.conc!==null).length}</div><div class="stat-lbl">Std pts</div></div>
+  `;
+
+  // Regression: x = net density, y = mg/mL
+  const stdPts=results.filter(r=>r.conc!==null).map(r=>({x:r.net,y:r.conc}));
+  const reg=linReg(stdPts);
+  const rc=document.getElementById('regCard');
+  if(reg&&stdPts.length>=2){
+    results.forEach(r=>{if(r.conc===null)r.interpConc=reg.slope*r.net+reg.intercept;});
+    const r2col=reg.r2>=0.99?'#00dc9f':reg.r2>=0.95?'#f5c842':'#ff7043';
+    const r2q=reg.r2>=0.99?'Excellent fit ✓':reg.r2>=0.95?'Acceptable — review outliers':'Poor fit — check band positions';
+    rc.innerHTML=`
+      <div class="reg-title">Standard curve · linear regression</div>
+      <div class="reg-eq">y = <span>${reg.slope.toFixed(5)}</span>x + <span>${reg.intercept.toFixed(5)}</span></div>
+      <div class="reg-r2-val" style="color:${r2col}">${reg.r2.toFixed(4)} <span style="font-family:var(--mono);font-size:16px;color:var(--muted)">R²</span></div>
+      <div class="reg-r2-lbl" style="color:${r2col}">${r2q}</div>
+      <canvas id="chartCnv" height="200"></canvas>
+    `;
+    drawChart(stdPts,reg,results.filter(r=>r.conc===null));
+  } else {
+    rc.innerHTML=`<div class="reg-title">Standard curve</div><div style="font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.6">Enter mg/mL concentrations for ≥2 standard lanes to generate the standard curve and R² value.</div>`;
+  }
+
+  // Data table
+  document.getElementById('dataTbody').innerHTML=results.map((r,i)=>{
+    const col=COLORS[r.idx%COLORS.length];
+    const cDisp=r.conc!=null?r.conc.toFixed(4):r.interpConc!=null?`~${r.interpConc.toFixed(4)}`:'—';
+    const cCol=r.conc!=null?'var(--cyan)':'var(--gold)';
+    return`<tr>
+      <td style="color:${col};font-family:var(--mono)">${r.idx+1}</td>
+      <td style="color:var(--cyan)">${r.name}</td>
+      <td>${r.sigMean.toFixed(1)}</td>
+      <td>${r.bgMean.toFixed(1)}</td>
+      <td>${r.invSig.toFixed(1)}</td>
+      <td>${r.invBg.toFixed(1)}</td>
+      <td style="color:var(--green);font-weight:500">${r.net.toFixed(3)}</td>
+      <td style="color:${cCol}">${cDisp}</td>
+    </tr>`;
+  }).join('');
+}
+
+function drawChart(stdPts,reg,unknowns){
+  const cnv=document.getElementById('chartCnv');if(!cnv)return;
+  const W=document.getElementById('regCard').clientWidth-28;
+  cnv.width=W;cnv.style.width=W+'px';
+  const ctx=cnv.getContext('2d');ctx.clearRect(0,0,W,200);
+  const pad={l:52,r:20,t:18,b:42};const pw=W-pad.l-pad.r,ph=200-pad.t-pad.b;
+  const allX=stdPts.map(p=>p.x),allY=stdPts.map(p=>p.y);
+  const minX=Math.min(...allX)*0.85,maxX=Math.max(...allX)*1.1;
+  const minY=0,maxY=Math.max(...allY)*1.15;
+  const tx=v=>(v-minX)/(maxX-minX)*pw+pad.l;
+  const ty=v=>ph-(v-minY)/(maxY-minY)*ph+pad.t;
+  // Grid
+  ctx.strokeStyle='rgba(0,220,159,0.06)';ctx.lineWidth=0.5;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+i*ph/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+pw,y);ctx.stroke();
+    ctx.fillStyle='rgba(0,220,159,0.4)';ctx.font='8px Space Mono,monospace';ctx.textAlign='right';
+    ctx.fillText((minY+(maxY-minY)*(1-i/4)).toFixed(3),pad.l-4,y+3);
+    const x=pad.l+i*pw/4;ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+ph);ctx.stroke();
+    ctx.textAlign='center';ctx.fillText((minX+(maxX-minX)*i/4).toFixed(1),x,pad.t+ph+12);
+  }
+  // Regression line
+  ctx.strokeStyle='rgba(0,220,159,0.55)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(tx(minX),ty(reg.slope*minX+reg.intercept));ctx.lineTo(tx(maxX),ty(reg.slope*maxX+reg.intercept));ctx.stroke();ctx.setLineDash([]);
+  // Unknown interpolated pts (gold)
+  unknowns.forEach(r=>{
+    if(r.interpConc==null)return;
+    ctx.fillStyle='rgba(245,200,66,0.65)';ctx.beginPath();ctx.arc(tx(r.net),ty(r.interpConc),5,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(245,200,66,0.9)';ctx.lineWidth=1;ctx.stroke();
+  });
+  // Standard pts
+  stdPts.forEach((p,i)=>{
+    ctx.fillStyle=COLORS[i%COLORS.length];ctx.beginPath();ctx.arc(tx(p.x),ty(p.y),7,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(5,8,13,0.9)';ctx.font='bold 8px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText(i+1,tx(p.x),ty(p.y)+3);
+  });
+  // Axes
+  ctx.strokeStyle='rgba(0,220,159,0.25)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ph);ctx.lineTo(pad.l+pw,pad.t+ph);ctx.stroke();
+  ctx.fillStyle='rgba(0,220,159,0.55)';ctx.font='8px Space Mono,monospace';ctx.textAlign='center';
+  ctx.fillText('Net density  (255−band) − (255−background)',pad.l+pw/2,200-4);
+  ctx.save();ctx.translate(11,pad.t+ph/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText('mg / mL',0,0);ctx.restore();
+  ctx.fillStyle='rgba(0,220,159,0.9)';ctx.font='bold 10px Space Mono,monospace';ctx.textAlign='right';
+  ctx.fillText(`R² = ${reg.r2.toFixed(4)}`,pad.l+pw,pad.t+12);
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+async function callClaude(prompt){
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:gelB64}},
+        {type:'text',text:prompt}
+      ]}]})});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${res.status}`);}
+  const d=await res.json();
+  return d.content?.find(b=>b.type==='text')?.text||'{}';
+}
+function tryParse(raw){
+  if(!raw)return null;
+  try{return JSON.parse(raw.trim());}catch(e){}
+  const m=raw.match(/\{[\s\S]*\}/);
+  if(m){try{return JSON.parse(m[0]);}catch(e){}}
+  return null;
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+</script>
+</body>
+</html>
